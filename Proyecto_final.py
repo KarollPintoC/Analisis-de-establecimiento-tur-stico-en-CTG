@@ -7,7 +7,6 @@ from matplotlib.colors import LogNorm
 
 #Leer el dataframe y estudios de sus datos
 data_proyect=pd.read_csv('Registro_Nacional_de_Turismo_-_RNT_20250629.csv')
-data_proyect.describe()
 data_proyect.info()
 
 # %%
@@ -148,34 +147,67 @@ plt.show()
 zona_emp
 
 #%%
-if 'NUM_EMP' in df_bolivar.columns:
-    # Filtrar para las 5 categorías principales y excluir establecimientos con 0 empleados
-    top_5_categorias_nombres = df_bolivar['CATEGORIA'].value_counts().nlargest(5).index
-    df_employees = df_bolivar[(df_bolivar['CATEGORIA'].isin(top_5_categorias_nombres)) & (df_bolivar['NUM_EMP'] > 200)]
+no_tiene_empleados=df_bolivar.query('NUM_EMP==0')
+micro_empresa=df_bolivar.query('NUM_EMP>0 & NUM_EMP <=10')
+pequena_empresa=df_bolivar.query('NUM_EMP>10 & NUM_EMP <=50')
+mediana_empresa=df_bolivar.query('NUM_EMP>50 & NUM_EMP <=200')
+gran_empresa=df_bolivar.query('NUM_EMP >200')
 
-    if not df_employees.empty:
-        plt.figure(figsize=(18, 10))
-        sns.boxplot(
-            x='CATEGORIA', 
-            y='NUM_EMP', 
-            data=df_employees, 
-            palette='crest',
-        )
-        # La escala logarítmica es crucial porque la mayoría tiene pocos empleados y unos pocos tienen muchísimos.
-        plt.yscale('log')
-        plt.title('Distribución del Número de Empleados por Categoría Principal', fontsize=20, fontweight='bold', pad=20)
-        plt.ylabel('Número de Empleados (Escala Logarítmica)', fontsize=14)
-        plt.xlabel('Categoría del Servicio Turístico', fontsize=14)
-        plt.xticks(rotation=15, ha='right')
-        plt.grid(True, which='both', linestyle='--')
-        plt.tight_layout()
-        plt.show()
-    else:
-        print("No se encontraron datos de empleados mayores a cero para graficar.")
-else:
-    print("La columna 'personal_ocupado' no se encontró en el dataset. Se omite el análisis de empleo.")
+# Datos y etiquetas para el gráfico
+sizes = [len(no_tiene_empleados), len(micro_empresa), len(pequena_empresa), len(mediana_empresa), len(gran_empresa)]
+labels = ['Sin Empleados', 'Microempresa (1-10)', 'Pequeña (11-50)', 'Mediana (51-200)', 'Gran Empresa (>200)']
+colors = ['#ff9999','#66b3ff','#99ff99','#ffcc99', '#c2c2f0']
 
+fig, ax = plt.subplots(figsize=(10, 6))
 
+# Crear las barras
+bars = ax.bar(labels, sizes, color=['#ff9999','#66b3ff','#99ff99','#ffcc99', '#c2c2f0'])
+
+# Añadir el título y las etiquetas
+ax.set_title('Cantidad de Empresas por Tamaño', fontsize=16)
+ax.set_ylabel('Número de Empresas', fontsize=12)
+ax.set_xlabel('Categoría de Empresa', fontsize=12)
+
+# Añadir el número exacto encima de cada barra
+ax.bar_label(bars, padding=3)
+
+# Quitar el borde superior y derecho para un look más limpio
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+
+#%%
+data_to_plot = [
+    micro_empresa['NUM_EMP'],
+    pequena_empresa['NUM_EMP'],
+    mediana_empresa['NUM_EMP'],
+    gran_empresa['NUM_EMP']
+]
+
+# Etiquetas para cada boxplot
+labels = ['Micro', 'Pequeña', 'Mediana', 'Grande']
+
+# 4. CREACIÓN DEL GRÁFICO
+fig, ax = plt.subplots(figsize=(10, 7))
+
+# Creación de los boxplots para cada categoría
+# patch_artist=True permite rellenar las cajas con color
+bplot = ax.boxplot(data_to_plot, labels=labels, patch_artist=True)
+
+# 5. TÍTULOS, ETIQUETAS Y ESCALA LOGARÍTMICA
+ax.set_title('Distribución de Empleados por Categoría de Empresa', fontsize=16)
+ax.set_ylabel('Número de Empleados (Escala Logarítmica)', fontsize=12)
+ax.set_xlabel('Tipo de Empresa', fontsize=12)
+
+# ---- PASO CLAVE: Se aplica la escala logarítmica ----
+ax.set_yscale('log')
+
+# Se añade una cuadrícula para facilitar la lectura en la escala logarítmica
+ax.yaxis.grid(True, linestyle='--', which='major', color='grey', alpha=.25)
+
+# Opcional: Colorear las cajas para que se vean mejor
+colors = ['#66b3ff', '#99ff99', '#ffcc99', '#c2c2f0']
+for patch, color in zip(bplot['boxes'], colors):
+    patch.set_facecolor(color)
 
 # %%
 #Agrupamos los meses con la cantidad de empleados 
